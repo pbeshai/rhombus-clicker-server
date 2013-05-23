@@ -1,10 +1,5 @@
 package server;
 
-import iClickerDriverOld.BaseClickerApp;
-import iClickerDriverOld.ButtonEnum;
-import iClickerDriverOld.ClickerException;
-import iClickerDriverOld.FrequencyEnum;
-import iClickerDriverOld.Vote;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -15,10 +10,12 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ca.ubc.clickers.BaseClickerApp;
+import ca.ubc.clickers.Vote;
+import ca.ubc.clickers.driver.exception.ClickerException;
+import ca.ubc.clickers.enums.ButtonEnum;
+import ca.ubc.clickers.enums.FrequencyEnum;
 import client.ClickerClient;
-
-import com.codeminders.hidapi.HIDDeviceNotFoundException;
-import com.codeminders.hidapi.HIDManager;
 
 /**
  * The runnable application. A server that continuously requests votes from the 
@@ -39,8 +36,6 @@ public class ClickerServer extends BaseClickerApp {
 	private List<ClickerClient> clients;
 	private int serverPort = DEFAULT_PORT;
 	private CommandController commandController;
-	private boolean baseStationConnected;
-	private HIDManager hidManager;
 	
 	public ClickerServer() throws InterruptedException, IOException, ClickerException {
 		this(null);
@@ -64,17 +59,6 @@ public class ClickerServer extends BaseClickerApp {
 		clients = new LinkedList<ClickerClient>();
 		inputQueue = new LinkedBlockingQueue<String>();
 		commandController = new CommandController(this);
-		initOS();
-		
-		hidManager = new HIDManagerBaseStation(this);
-		
-		try {
-			initDriver(hidManager);
-			baseStationConnected = true;
-		} catch (HIDDeviceNotFoundException e) {
-			System.err.println("iClicker Base Station not connected.");
-			baseStationConnected = false;
-		}
 		
 		run();
 	}
@@ -134,39 +118,14 @@ public class ClickerServer extends BaseClickerApp {
 		
 	}
 	
-	public boolean isBaseStationConnected() {
-		return baseStationConnected;
-	}
-	
-	private void startBaseStation() {
+	@Override
+	protected void startBaseStation() {
 		try {
 			driver.startBaseStation();
 			System.out.println("[device-start]");
 		} catch (Exception e1) {
 			System.err.println("ERROR: Failed to start base station.");
 		}
-	}
-	
-	public void baseStationAdded() {
-		System.out.println("Base station added.");
-		
-		try {
-			initDriver(hidManager);
-			startBaseStation();
-			acceptingVotes = false;
-			baseStationConnected = true;
-		} catch(IOException e) {
-			System.err.println("Error initializing base station driver");
-		} catch(InterruptedException e) {
-			System.err.println("Interrupted while trying to initialize base station");
-		}
-	}
-	
-	public void baseStationRemoved() {
-		System.out.println("Base station removed.");
-		baseStationConnected = false;
-		acceptingVotes = false;
-		driver = null;
 	}
 	
 	// public interface for others to queue up inputs

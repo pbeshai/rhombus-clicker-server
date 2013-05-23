@@ -2,10 +2,10 @@ package server;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-import iClickerDriverOld.ClickerException;
-import iClickerDriverOld.IClickerDriverOld;
-import iClickerDriverOld.Vote;
+import ca.ubc.clickers.Vote;
+import ca.ubc.clickers.driver.exception.ClickerException;
 
 /**
  * Continuously reads votes from the base station
@@ -28,7 +28,7 @@ public class ClickerThread extends Thread {
 	
 	@Override
 	public void run() {
-		ArrayList<Vote> votes = new ArrayList<Vote>();
+		List<Vote> votes = new ArrayList<Vote>();
 		while (true) {
 			try {
 					
