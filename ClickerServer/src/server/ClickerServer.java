@@ -132,9 +132,17 @@ public class ClickerServer extends BaseClickerApp {
 		commandController.runCommand(message);
 	}
 	
+	// TODO: allow sending output just to one client.
 	// sends output to all the clients
 	public void output(String message) {
-		System.out.println(message); // output locally for debugging
+		output(message, true);
+	}
+	
+	// sends output to all the clients
+	public void output(String message, boolean printLocal) {
+		if (printLocal) {
+			System.out.println(message); // output locally for debugging
+		}
 				
 		// send to all the clients
 		for (int i = 0; i < clients.size(); i++) {

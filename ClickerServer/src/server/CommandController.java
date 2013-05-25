@@ -11,6 +11,7 @@ import java.util.List;
  *
  */
 public class CommandController {
+	public static final String COMMAND_PING = "ping"; // to show we are connected
 	public static final String COMMAND_START_VOTING = "vote start";
 	public static final String COMMAND_STOP_VOTING = "vote stop";
 	public static final String COMMAND_STATUS = "status";
@@ -28,7 +29,11 @@ public class CommandController {
 	}
 	
 	// Oh, how I dream of anonymous functions. Java 7 has them!
+	// TODO: probably differentiate between commands that send reply to 1 client vs. broadcasting to all
 	private void registerCommands() {
+		commands.add(new Command(COMMAND_PING) { void run(String args) throws Exception {
+			server.output("[ping]\n", false);
+		} });
 		
 		// start voting
 		commands.add(new Command(COMMAND_START_VOTING) { void run(String args) throws Exception {
