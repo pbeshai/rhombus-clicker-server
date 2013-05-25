@@ -69,6 +69,7 @@ public class CommandController {
 		
 		// click received (as opposed to via clicker base station)
 		commands.add(new Command(COMMAND_CLICK) { void run(String votesStr) throws Exception {
+			// TODO: this shouldn't crash with bad format
 			server.outputVotes(server.votesFromString(votesStr));
 		} });
 	}

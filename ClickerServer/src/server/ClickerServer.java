@@ -118,16 +118,6 @@ public class ClickerServer extends BaseClickerApp {
 		
 	}
 	
-	@Override
-	protected void startBaseStation() {
-		try {
-			driver.startBaseStation();
-			System.out.println("[device-start]");
-		} catch (Exception e1) {
-			System.err.println("ERROR: Failed to start base station.");
-		}
-	}
-	
 	// public interface for others to queue up inputs
 	public void input(String message) {
 		try {
@@ -230,7 +220,7 @@ public class ClickerServer extends BaseClickerApp {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		String instructorId = "171BA6AA";
+		String instructorId = "371BA68A"; //"171BA6AA";
 		FrequencyEnum channel1 = null, channel2 = null;
 		Integer port = null;
 		if (args.length > 0) {
