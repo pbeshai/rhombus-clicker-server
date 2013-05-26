@@ -10,9 +10,9 @@ import java.util.concurrent.BlockingQueue;
 public class ServerInputThread extends Thread {
 	private ClickerServer server;
 	
-	private final BlockingQueue<String> queue;
+	private final BlockingQueue<ClickerInput> queue;
 	
-	public ServerInputThread(ClickerServer server, BlockingQueue<String> queue) {
+	public ServerInputThread(ClickerServer server, BlockingQueue<ClickerInput> queue) {
 		super("Server Input Listener Thread");
 		
 		this.server = server;
@@ -25,8 +25,8 @@ public class ServerInputThread extends Thread {
 	public void run() {
 		try {
 			while (true) {
-				String message = queue.take();
-				server.runInput(message);
+				ClickerInput input = queue.take();
+				server.runInput(input);
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

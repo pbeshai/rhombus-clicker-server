@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import client.ClickerClient;
+
 
 /**
  * Class responsible for interpreting and running commands on the server
@@ -31,24 +33,26 @@ public class CommandController {
 	// Oh, how I dream of anonymous functions. Java 7 has them!
 	// TODO: probably differentiate between commands that send reply to 1 client vs. broadcasting to all
 	private void registerCommands() {
-		commands.add(new Command(COMMAND_PING) { void run(String args) throws Exception {
-			server.output("[ping]\n", false);
+		// does not broadcast
+		commands.add(new Command(COMMAND_PING) { void run(String args, ClickerClient client) throws Exception {
+			server.output("[ping]\n", client, false);
 		} });
 		
 		// start voting
-		commands.add(new Command(COMMAND_START_VOTING) { void run(String args) throws Exception {
+		commands.add(new Command(COMMAND_START_VOTING) { void run(String args, ClickerClient client) throws Exception {
 			server.startAcceptingVotes();
 			server.output("[vote start]\n");
 		} });
 		
 		// stop voting
-		commands.add(new Command(COMMAND_STOP_VOTING) { void run(String args) throws Exception {
+		commands.add(new Command(COMMAND_STOP_VOTING) { void run(String args, ClickerClient client) throws Exception {
 			server.stopAcceptingVotes();
 			server.output("[vote stop]\n");
 		} });
 		
 		// get status - instructor id, accepting votes, number of clients
-		commands.add(new Command(COMMAND_STATUS) { void run(String args) throws Exception {
+		// does not broadcast
+		commands.add(new Command(COMMAND_STATUS) { void run(String args, ClickerClient client) throws Exception {
 			StringBuilder message = new StringBuilder();
 			
 			message.append("[status]\n");
@@ -69,41 +73,44 @@ public class CommandController {
 			message.append(server.getNumClients());
 			message.append("\n");
 			
-			server.output(message.toString());
+			server.output(message.toString(), client);
 		} });
 		
 		// click received (as opposed to via clicker base station)
-		commands.add(new Command(COMMAND_CLICK) { void run(String votesStr) throws Exception {
+		commands.add(new Command(COMMAND_CLICK) { void run(String votesStr, ClickerClient client) throws Exception {
 			// TODO: this shouldn't crash with bad format
 			server.outputVotes(server.votesFromString(votesStr));
 		} });
 	}
 	
 	
-	public void runCommand(String input) {
+	public void runCommand(ClickerInput input) {
+		String message = input.message;
+		ClickerClient client = input.client;
+		
 		// split into command and args
 		String name, args;
-		int separator = input.indexOf(COMMAND_SEPARATOR);
+		int separator = message.indexOf(COMMAND_SEPARATOR);
 		if (separator != -1) {
-			name = input.substring(0, separator);
-			args = input.substring(separator + 1);
+			name = message.substring(0, separator);
+			args = message.substring(separator + 1);
 		} else {
-			name = input;
+			name = message;
 			args = "";
 		}
 		
 		try {
 			for (Command command : commands) {
 				if (command.name.equals(name)) {
-					command.run(args);
+					command.run(args, client);
 					return;
 				}
 			}
 
-			System.err.println("Warning! Unable to find command for "+input);
+			System.err.println("Warning! Unable to find command for "+message);
 		} catch (Exception e) {
-			server.output("[error:"+input+"]\n");
-			System.out.println("Exception while running command "+input);
+			server.output("[error:"+message+"]\n");
+			System.out.println("Exception while running command "+message);
 			e.printStackTrace();
 		}
 	}
@@ -116,6 +123,6 @@ public class CommandController {
 			this.name = input;
 		}
 		
-		abstract void run(String args) throws Exception;
+		abstract void run(String args, ClickerClient client) throws Exception;
 	}
 }

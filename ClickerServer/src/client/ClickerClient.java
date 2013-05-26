@@ -88,7 +88,7 @@ public class ClickerClient {
 	
 	// sends input from client to server
 	public void input(String message) {
-		server.input(message);
+		server.input(message, this);
 	}
 	
 	

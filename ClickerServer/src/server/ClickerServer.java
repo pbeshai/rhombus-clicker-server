@@ -32,7 +32,7 @@ public class ClickerServer extends BaseClickerApp {
 	public static final int DEFAULT_PORT = 4444;
 	public static final String INSTRUCTOR_OUTPUT_ID = "INSTRUCTOR";
 	
-	private final BlockingQueue<String> inputQueue;
+	private final BlockingQueue<ClickerInput> inputQueue;
 	private List<ClickerClient> clients;
 	private int serverPort = DEFAULT_PORT;
 	private CommandController commandController;
@@ -57,7 +57,7 @@ public class ClickerServer extends BaseClickerApp {
 		
 		LCDRow1 = "Clicker Server";
 		clients = new LinkedList<ClickerClient>();
-		inputQueue = new LinkedBlockingQueue<String>();
+		inputQueue = new LinkedBlockingQueue<ClickerInput>();
 		commandController = new CommandController(this);
 		
 		run();
@@ -118,46 +118,65 @@ public class ClickerServer extends BaseClickerApp {
 		
 	}
 	
-	// public interface for others to queue up inputs
+	// queue up input without specifying clicker client
 	public void input(String message) {
+		input(message, null);
+	}
+	
+	// public interface for others to queue up inputs
+	public void input(String message, ClickerClient client) {
 		try {
-			inputQueue.add(message);
+			inputQueue.add(new ClickerInput(message, client));
 		} catch (IllegalStateException e) {
 			System.err.println("Warning: no space left in server input queue");
 		}
 	}
 	
 	// interpret input (e.g. "vote start" to start accepting votes), to be used by the input listener
-	void runInput(String message) {
-		commandController.runCommand(message);
+	void runInput(ClickerInput input) {
+		commandController.runCommand(input);
 	}
 	
 	// TODO: allow sending output just to one client.
 	// sends output to all the clients
 	public void output(String message) {
-		output(message, true);
+		output(message, null, true);
 	}
 	
-	// sends output to all the clients
-	public void output(String message, boolean printLocal) {
+	// sends output just to specified client
+	public void output(String message, ClickerClient client) {
+		output(message, client, true);
+	}
+	
+	// sends output to all the clients if client == null, otherwise just to client
+	public void output(String message, ClickerClient client, boolean printLocal) {
 		if (printLocal) {
 			System.out.println(message); // output locally for debugging
 		}
-				
-		// send to all the clients
-		for (int i = 0; i < clients.size(); i++) {
-			ClickerClient client = clients.get(i);
-			// prune dead clients
-			if(!client.isAlive()) {
-				clients.remove(client);
-				i--;
-				continue;
-			} 
 			
-			// broadcast message to each client
+		if (client == null) { // broadcast
+			// send to all the clients
+			for (int i = 0; i < clients.size(); i++) {
+				ClickerClient currClient = clients.get(i);
+				// prune dead clients
+				if(!currClient.isAlive()) {
+					clients.remove(currClient);
+					i--;
+					continue;
+				} 
+				
+				// broadcast message to each client
+				currClient.output(message);
+			}
+		// don't broadcast
+		} else if(!client.isAlive()) { 	// prune dead client
+			clients.remove(client);
+		} else {			
+			// send message to individual client
 			client.output(message);
 		}
 	}
+		
 	
 	public int getNumClients() {
 		return clients.size();
