@@ -64,11 +64,6 @@ public class ClickerServer extends BaseClickerApp {
 	}
 	
 	public void run() throws IOException, InterruptedException {
-		// start the device 
-		if (baseStationConnected) {
-			startBaseStation();
-		}
-		
 		// start the input listener
 		@SuppressWarnings("unused")
 		ServerInputThread inputListenerThread = new ServerInputThread(this, inputQueue); 
