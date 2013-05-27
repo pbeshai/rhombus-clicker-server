@@ -1,4 +1,4 @@
-package server;
+package ca.ubc.clicker.server;
 
 import java.io.IOException;
 import java.util.ArrayList;

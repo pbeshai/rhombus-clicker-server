@@ -1,6 +1,6 @@
-package server;
+package ca.ubc.clicker.server;
 
-import client.ClickerClient;
+import ca.ubc.clicker.client.ClickerClient;
 
 public class ClickerInput {
 	String message;

@@ -1,9 +1,10 @@
-package client;
+package ca.ubc.clicker.client;
 
 import java.io.IOException;
 import java.net.Socket;
 
-import server.ClickerServer;
+import ca.ubc.clicker.server.ClickerServer;
+
 
 /**
  * A object for handling client connections to the server. They receive output

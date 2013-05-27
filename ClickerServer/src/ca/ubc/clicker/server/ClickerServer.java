@@ -1,4 +1,4 @@
-package server;
+package ca.ubc.clicker.server;
 
 
 import java.io.IOException;
@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ca.ubc.clicker.client.ClickerClient;
 import ca.ubc.clickers.BaseClickerApp;
 import ca.ubc.clickers.Vote;
 import ca.ubc.clickers.driver.exception.ClickerException;
 import ca.ubc.clickers.enums.ButtonEnum;
 import ca.ubc.clickers.enums.FrequencyEnum;
-import client.ClickerClient;
 
 /**
  * The runnable application. A server that continuously requests votes from the 

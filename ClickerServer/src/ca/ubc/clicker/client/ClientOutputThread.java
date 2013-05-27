@@ -1,4 +1,4 @@
-package client;
+package ca.ubc.clicker.client;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;

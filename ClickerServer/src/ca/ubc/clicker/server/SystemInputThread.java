@@ -1,4 +1,4 @@
-package server;
+package ca.ubc.clicker.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;

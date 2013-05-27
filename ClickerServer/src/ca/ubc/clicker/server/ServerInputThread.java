@@ -1,4 +1,4 @@
-package server;
+package ca.ubc.clicker.server;
 
 import java.util.concurrent.BlockingQueue;
 

@@ -1,10 +1,10 @@
-package server;
+package ca.ubc.clicker.server;
 
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import client.ClickerClient;
+import ca.ubc.clicker.client.ClickerClient;
 
 
 /**
@@ -18,7 +18,7 @@ public class CommandController {
 	public static final String COMMAND_STOP_VOTING = "vote stop";
 	public static final String COMMAND_STATUS = "status";
 	public static final String COMMAND_CLICK = "click";
-	private static final char COMMAND_SEPARATOR = '|'; // separators command from args. e.g. click|id:button 
+	public static final char COMMAND_SEPARATOR = '|'; // separators command from args. e.g. click|id:button 
 	
 	private final ClickerServer server;
 	
