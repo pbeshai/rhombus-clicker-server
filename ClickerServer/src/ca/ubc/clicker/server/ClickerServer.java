@@ -143,30 +143,35 @@ public class ClickerServer extends BaseClickerApp {
 		output(message, client, true);
 	}
 	
+	// removes dead clients
+	private void pruneClients() {
+		for (int i = 0; i < clients.size(); i++) {
+			ClickerClient currClient = clients.get(i);
+			// prune dead clients
+			if(!currClient.isAlive()) {
+				clients.remove(currClient);
+				i--;
+				continue;
+			} 
+		}
+	}
+	
 	// sends output to all the clients if client == null, otherwise just to client
 	public void output(String message, ClickerClient client, boolean printLocal) {
 		if (printLocal) {
 			System.out.println(message); // output locally for debugging
 		}
-			
+		
+		pruneClients();
+		
 		if (client == null) { // broadcast
 			// send to all the clients
 			for (int i = 0; i < clients.size(); i++) {
-				ClickerClient currClient = clients.get(i);
-				// prune dead clients
-				if(!currClient.isAlive()) {
-					clients.remove(currClient);
-					i--;
-					continue;
-				} 
-				
 				// broadcast message to each client
-				currClient.output(message);
+				clients.get(i).output(message);
 			}
 		// don't broadcast
-		} else if(!client.isAlive()) { 	// prune dead client
-			clients.remove(client);
-		} else {			
+		} else if(client.isAlive()) {
 			// send message to individual client
 			client.output(message);
 		}
