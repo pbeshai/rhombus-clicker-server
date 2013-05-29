@@ -190,12 +190,19 @@ public class ClickerServer extends BaseClickerApp {
 	
 	// formats a vote for output over the socket (ID:BUTTON)
 	// if id == instructor, output is INSTRUCTOR:BUTTON
-	public String voteString(String id, String button) {
+	public String voteString(String id, String button) { 
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
 		if (instructorId.equals(id)) {
-			id = INSTRUCTOR_OUTPUT_ID;
-		} 
+			builder.append("\"instructor\":true,");
+		}
+		builder.append("\"id\":\"");
+		builder.append(id);
+		builder.append("\",\"choice\":\"");
+		builder.append(button);
+		builder.append("\"}");
 		
-		return String.format("%s:%s", id, button);
+		return builder.toString();
 	}
 	
 	public List<Vote> votesFromString(String votesStr) {
@@ -209,7 +216,7 @@ public class ClickerServer extends BaseClickerApp {
 		return voteList;
 	}
 	
-	// vote of form ID:BUTTON, discard those with ID=INSTRUCTOR
+	// vote of form ID:BUTTON
 	public Vote voteFromString(String vote) {
 		// break into id and button
 		String[] parts = vote.split(":");
@@ -226,17 +233,24 @@ public class ClickerServer extends BaseClickerApp {
 	public void outputVotes(List<Vote> votes) {
 		// assemble a vote string
 		if (!votes.isEmpty()) {
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new StringBuilder();			
+			int numVotes = 0;
 			for (Vote vote : votes) {
 				// instructor detected
 				if(instructorId.equals(vote.getId())) {
 					output(voteString(vote));
 				} else {
+					if (numVotes == 0) {
+						builder.append("[");
+					} else {
+						builder.append(",");
+					}
 					builder.append(voteString(vote));
-					builder.append(" ");
+					numVotes += 1;
 				}
 			}
-			if(builder.length() > 0 && acceptingVotes) { // only output if we are accepting votes
+			if(numVotes > 0 && acceptingVotes) { // only output if we are accepting votes
+				builder.append("]");
 				output(builder.toString().trim());
 			}
 		}
