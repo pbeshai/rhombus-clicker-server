@@ -81,11 +81,19 @@ public class CommandController {
 	public void runCommand(ClickerInput input) {
 		String message = input.message; // is a CommandMessage object (JSON)
 		ClickerClient client = input.client;
-		
+		String name = null;
+		JsonElement args = null;
+
 		// deserialize as a generic json obj so we can interpret the arguments later.
-		JsonObject jsonObj = parser.parse(message).getAsJsonObject();
-		String name = jsonObj.get("command").getAsString();
-		JsonElement args = jsonObj.get("arguments");
+		try {
+			JsonObject jsonObj = parser.parse(message).getAsJsonObject();
+			name = jsonObj.get("command").getAsString();
+			args = jsonObj.get("arguments");
+		} catch (IllegalStateException e) {
+			System.err.println("Error running command: " + e.getMessage());
+			return;
+		}
+		
 				
 		try {
 			for (Command command : commands) {

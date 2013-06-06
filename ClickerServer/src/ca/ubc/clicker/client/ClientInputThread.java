@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+/**
+ * Reads in input from a client
+ * @author pbeshai
+ *
+ */
 public class ClientInputThread extends Thread {
 	private int id;
 	
