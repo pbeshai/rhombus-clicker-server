@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import ca.ubc.clicker.server.ClickerServer;
+import ca.ubc.clicker.server.io.IOServer;
 
 
 /**
@@ -29,9 +30,9 @@ public class ClickerClient {
 	private ClientOutputThread output;
 	private ClientInputThread input;
 	
-	private ClickerServer server;
+	private IOServer server;
 	
-	public ClickerClient(Socket clientSocket, ClickerServer server) {
+	public ClickerClient(Socket clientSocket, IOServer server) {
 		this.id = clientId++;
 		System.out.println("Client "+id+" connected.");
 		

@@ -2,8 +2,6 @@ package ca.ubc.clicker.server;
 
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +9,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.io.BaseIOServer;
+import ca.ubc.clicker.server.io.IOServer;
 import ca.ubc.clickers.BaseClickerApp;
 import ca.ubc.clickers.Vote;
 import ca.ubc.clickers.driver.exception.ClickerException;
@@ -27,8 +27,7 @@ import ca.ubc.clickers.enums.FrequencyEnum;
  * @author pbeshai
  *
  */
-public class ClickerServer extends BaseClickerApp {
-	
+public class ClickerServer extends BaseClickerApp implements IOServer {
 	public static final int DEFAULT_PORT = 4444;
 	public static final String INSTRUCTOR_OUTPUT_ID = "INSTRUCTOR";
 	
@@ -36,6 +35,7 @@ public class ClickerServer extends BaseClickerApp {
 	private List<ClickerClient> clients;
 	private int serverPort = DEFAULT_PORT;
 	private CommandController commandController;
+	private IOServer io;
 	
 	public ClickerServer() throws InterruptedException, IOException, ClickerException {
 		this(null);
@@ -54,16 +54,14 @@ public class ClickerServer extends BaseClickerApp {
 		super(instructorId, channel1, channel2);
 		
 		if (port != null) this.serverPort = port;
-		
 		LCDRow1 = "Clicker Server";
 		clients = new LinkedList<ClickerClient>();
 		inputQueue = new LinkedBlockingQueue<ClickerInput>();
 		commandController = new CommandController(this);
-		
-		run();
+		io = new BaseIOServer(serverPort, this);
 	}
 	
-	public void run() throws IOException, InterruptedException {
+	public void init() throws IOException {
 		// start the input listener
 		@SuppressWarnings("unused")
 		ServerInputThread inputListenerThread = new ServerInputThread(this, inputQueue); 
@@ -76,49 +74,21 @@ public class ClickerServer extends BaseClickerApp {
 		// start thread for reading votes from the base station
 		@SuppressWarnings("unused")
 		ClickerThread clickerThread = new ClickerThread(this);
-		
-		ServerSocket serverSocket = null;
-		Socket clientSocket = null;
-		
-		// bind the server to the right port
-		if (serverPort >= 0) {
-			try {
-				serverSocket = new ServerSocket(serverPort);
-				System.out.println("Successfully listening on port " + serverPort);
-				
-				// accept client connections
-				try {
-					while (true) {
-						clientSocket = serverSocket.accept();
-						ClickerClient client = new ClickerClient(clientSocket, this);
-						clients.add(client);
-					}
-				} catch (IOException e) {
-					System.err.println("Server socket accept failed on port: " + serverPort);
-					System.exit(-1);
-				}
-				
-				serverSocket.close();
-				
-			} catch (IOException e) {
-				System.err.println("ERROR: Could not listen on port: " + serverPort);
-			}
-		}
-		
-		System.out.println("Failed to open socket on port " + serverPort + "; running locally");
-		
-		while (true) {
-			Thread.sleep(300);
-		}
-		
+	}
+	
+	public void run() throws IOException, InterruptedException {
+		init();
+		io.run();
 	}
 	
 	// queue up input without specifying clicker client
+	@Override
 	public void input(String message) {
-		input(message, null);
+		input(message);
 	}
 	
 	// public interface for others to queue up inputs
+	@Override
 	public void input(String message, ClickerClient client) {
 		try {
 			inputQueue.add(new ClickerInput(message, client));
@@ -132,29 +102,18 @@ public class ClickerServer extends BaseClickerApp {
 		commandController.runCommand(input);
 	}
 	
-	// TODO: allow sending output just to one client.
 	// sends output to all the clients
+	@Override
 	public void output(String message) {
 		output(message, null, true);
 	}
 	
 	// sends output just to specified client
+	@Override
 	public void output(String message, ClickerClient client) {
 		output(message, client, true);
 	}
 	
-	// removes dead clients
-	private void pruneClients() {
-		for (int i = 0; i < clients.size(); i++) {
-			ClickerClient currClient = clients.get(i);
-			// prune dead clients
-			if(!currClient.isAlive()) {
-				clients.remove(currClient);
-				i--;
-				continue;
-			} 
-		}
-	}
 	
 	// sends output to all the clients if client == null, otherwise just to client
 	public void output(String message, ClickerClient client, boolean printLocal) {
@@ -162,21 +121,8 @@ public class ClickerServer extends BaseClickerApp {
 			System.out.println(message); // output locally for debugging
 		}
 		
-		pruneClients();
-		
-		if (client == null) { // broadcast
-			// send to all the clients
-			for (int i = 0; i < clients.size(); i++) {
-				// broadcast message to each client
-				clients.get(i).output(message);
-			}
-		// don't broadcast
-		} else if(client.isAlive()) {
-			// send message to individual client
-			client.output(message);
-		}
+		io.output(message, client);
 	}
-		
 	
 	public int getNumClients() {
 		return clients.size();
@@ -238,7 +184,7 @@ public class ClickerServer extends BaseClickerApp {
 			for (Vote vote : votes) {
 				// instructor detected
 				if(instructorId.equals(vote.getId())) {
-					output(voteString(vote));
+					output("["+voteString(vote)+"]");
 				} else {
 					if (numVotes == 0) {
 						builder.append("[");
@@ -280,7 +226,7 @@ public class ClickerServer extends BaseClickerApp {
 		System.out.println("Channel2: " + (channel2 == null ? DEFAULT_CHANNEL_2 : channel2));
 		System.out.println("Port: " + (port == null ? DEFAULT_PORT : port));
 		
-		@SuppressWarnings("unused")
 		ClickerServer server = new ClickerServer(instructorId, channel1, channel2, port);
+		server.run();
 	}
 }

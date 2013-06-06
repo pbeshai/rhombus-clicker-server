@@ -21,7 +21,7 @@ public class ClientOutputThread extends Thread {
 		// read in from the message queue and output across the socket
 		try {
 			while (true) {
-				out.print(queue.take());
+				out.println(queue.take());
 				
 				// checkError true if we failed to write to output stream 
 				// indicating socket closed.
