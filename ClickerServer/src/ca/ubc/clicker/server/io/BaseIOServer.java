@@ -43,7 +43,7 @@ public class BaseIOServer implements IOServer {
 					while (true) {
 						clientSocket = serverSocket.accept();
 						// composed server will receive the 'input' calls from ClickerClient.
-						ClickerClient client = new ClickerClient(clientSocket, composedServer == null ? this : composedServer);
+						ClickerClient client = new ClickerClient(clientSocket, this);
 						clients.add(client);
 					}
 				} catch (IOException e) {
@@ -66,12 +66,20 @@ public class BaseIOServer implements IOServer {
 	}
 
 	public void input(String message) {
-		input(message, null);
+		if (composedServer != null) {
+			composedServer.input(message);
+		} else {
+			input(message, null);
+		}
 	}
 
-	// should be overridden
+	// should be overridden if not composed
 	public void input(String message, ClickerClient client) {
-		System.out.println("INPUT: "+message+", client: "+client);
+		if (composedServer != null) {
+			composedServer.input(message, client);
+		} else {
+			System.out.println("INPUT: "+message+", client: "+client);
+		}
 	}
 	
 	// removes dead clients
@@ -108,5 +116,10 @@ public class BaseIOServer implements IOServer {
 			// send message to individual client
 			client.output(message);
 		}
+	}
+	
+	@Override
+	public int getNumClients() {
+		return clients.size();
 	}
 }

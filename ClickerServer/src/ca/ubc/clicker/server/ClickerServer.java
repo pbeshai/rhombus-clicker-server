@@ -3,7 +3,7 @@ package ca.ubc.clicker.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,11 +11,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import ca.ubc.clicker.client.ClickerClient;
 import ca.ubc.clicker.server.io.BaseIOServer;
 import ca.ubc.clicker.server.io.IOServer;
+import ca.ubc.clicker.server.messages.ErrorMessage;
+import ca.ubc.clicker.server.messages.ResponseMessage;
+import ca.ubc.clicker.server.messages.StatusMessage;
+import ca.ubc.clicker.server.messages.VoteMessage;
 import ca.ubc.clickers.BaseClickerApp;
 import ca.ubc.clickers.Vote;
 import ca.ubc.clickers.driver.exception.ClickerException;
 import ca.ubc.clickers.enums.ButtonEnum;
 import ca.ubc.clickers.enums.FrequencyEnum;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 
 /**
  * The runnable application. A server that continuously requests votes from the 
@@ -32,9 +40,9 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	public static final String INSTRUCTOR_OUTPUT_ID = "INSTRUCTOR";
 	
 	private final BlockingQueue<ClickerInput> inputQueue;
-	private List<ClickerClient> clients;
 	private int serverPort = DEFAULT_PORT;
 	private CommandController commandController;
+	private GsonBuilder gsonBuilder;
 	private IOServer io;
 	
 	public ClickerServer() throws InterruptedException, IOException, ClickerException {
@@ -55,9 +63,9 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		
 		if (port != null) this.serverPort = port;
 		LCDRow1 = "Clicker Server";
-		clients = new LinkedList<ClickerClient>();
 		inputQueue = new LinkedBlockingQueue<ClickerInput>();
 		commandController = new CommandController(this);
+		gsonBuilder = new GsonBuilder();
 		io = new BaseIOServer(serverPort, this);
 	}
 	
@@ -84,7 +92,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	// queue up input without specifying clicker client
 	@Override
 	public void input(String message) {
-		input(message);
+		input(message, null);
 	}
 	
 	// public interface for others to queue up inputs
@@ -125,81 +133,95 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	}
 	
 	public int getNumClients() {
-		return clients.size();
+		return io.getNumClients();
 	}
 	
-	// formats a vote for output over the socket (ID:BUTTON)
-	// if id == instructor, output is INSTRUCTOR:BUTTON
-	public String voteString(Vote vote) {
-		return voteString(vote.getId(), vote.getButton().name());
+	private VoteMessage voteMessage(Vote vote) {
+		return voteMessage(vote.getId(), vote.getButton().name());
 	}
 	
-	// formats a vote for output over the socket (ID:BUTTON)
-	// if id == instructor, output is INSTRUCTOR:BUTTON
-	public String voteString(String id, String button) { 
-		StringBuilder builder = new StringBuilder();
-		builder.append("{");
+	private VoteMessage voteMessage(String id, String button) {
+		VoteMessage message = new VoteMessage();
+		message.id = id;
+		message.vote = button;
 		if (instructorId.equals(id)) {
-			builder.append("\"instructor\":true,");
+			message.instructor = true;
 		}
-		builder.append("\"id\":\"");
-		builder.append(id);
-		builder.append("\",\"choice\":\"");
-		builder.append(button);
-		builder.append("\"}");
+		message.time = new Date().getTime();
 		
-		return builder.toString();
+		return message;
 	}
 	
-	public List<Vote> votesFromString(String votesStr) {
-		String[] votes = votesStr.trim().split(" ");
-		
-		List<Vote> voteList = new ArrayList<Vote>(votes.length);
-		for (String vote : votes) {
-			voteList.add(voteFromString(vote));
+	private Vote voteFromVoteMessage(VoteMessage message) {
+		// ignore the id generated from the constructor and use the one from the message
+		String voteButton = message.vote.toUpperCase();
+		try { 
+			Vote vote = new Vote("111111", ButtonEnum.valueOf(voteButton));
+			vote.setId(message.id);
+			return vote;
+		} catch (IllegalArgumentException e) {
+			System.err.println("Discarding illegal vote "+voteButton+" by "+message.id);
 		}
-		
-		return voteList;
+		return null;
 	}
 	
-	// vote of form ID:BUTTON
-	public Vote voteFromString(String vote) {
-		// break into id and button
-		String[] parts = vote.split(":");
-		String id = parts[0].trim();
-		String button = parts[1].trim();
+	// json is serialized collection of VoteMessage objects
+	public List<Vote> votesFromJson(JsonElement votesJson) {
+		VoteMessage[] messages = gson().fromJson(votesJson, VoteMessage[].class);
 		
-		// ignore the id generated from the constructor and use the one from the string.
-		Vote v = new Vote("111111", ButtonEnum.valueOf(button));
-		v.setId(id);
+		if (messages == null) {
+			return null;
+		}
 		
-		return v;
+		List<Vote> votes = new ArrayList<Vote>(messages.length);
+		
+		for (VoteMessage message : messages) {
+			Vote vote = voteFromVoteMessage(message);
+			if (vote != null) {
+				votes.add(vote);
+			}
+		}
+		
+		return votes;
 	}
 	
 	public void outputVotes(List<Vote> votes) {
-		// assemble a vote string
-		if (!votes.isEmpty()) {
-			StringBuilder builder = new StringBuilder();			
-			int numVotes = 0;
-			for (Vote vote : votes) {
-				// instructor detected
-				if(instructorId.equals(vote.getId())) {
-					output("["+voteString(vote)+"]");
-				} else {
-					if (numVotes == 0) {
-						builder.append("[");
-					} else {
-						builder.append(",");
-					}
-					builder.append(voteString(vote));
-					numVotes += 1;
-				}
-			}
-			if(numVotes > 0 && acceptingVotes) { // only output if we are accepting votes
-				builder.append("]");
-				output(builder.toString().trim());
-			}
+		if (votes == null || votes.isEmpty()) {
+			return;
 		}
+		
+		// convert to voteMessage list
+		List<VoteMessage> messages = new ArrayList<VoteMessage>(votes.size());
+		for (Vote vote : votes) {
+			messages.add(voteMessage(vote));
+		}
+		
+		ResponseMessage message = new ResponseMessage();
+		message.type = "votes";
+		message.data = messages;
+		output(gson().toJson(message));
+	}
+	
+	public void outputError(String errorStr) {
+		ErrorMessage message = new ErrorMessage();
+		message.error = errorStr;
+		output(gson().toJson(message));
+	}
+	
+	
+	public StatusMessage getStatus() {
+		StatusMessage status = new StatusMessage();
+		status.acceptingVotes = isAcceptingVotes();
+		status.numClients = getNumClients();
+		status.instructorId = getInstructorId();
+		status.time = new Date().getTime();
+		
+		return status;
+	}
+	
+
+	public Gson gson() {
+		return this.gsonBuilder.create();
 	}
 	
 	/**

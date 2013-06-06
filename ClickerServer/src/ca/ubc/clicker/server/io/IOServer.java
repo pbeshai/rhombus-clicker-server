@@ -19,4 +19,6 @@ public interface IOServer {
 	public abstract void output(String message, ClickerClient client);
 
 	public abstract void run() throws IOException, InterruptedException;
+
+	int getNumClients();
 }

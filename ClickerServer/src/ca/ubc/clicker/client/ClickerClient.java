@@ -3,7 +3,6 @@ package ca.ubc.clicker.client;
 import java.io.IOException;
 import java.net.Socket;
 
-import ca.ubc.clicker.server.ClickerServer;
 import ca.ubc.clicker.server.io.IOServer;
 
 

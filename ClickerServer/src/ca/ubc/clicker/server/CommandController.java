@@ -1,10 +1,15 @@
 package ca.ubc.clicker.server;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.messages.CommandResponseMessage;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 
 /**
@@ -14,91 +19,74 @@ import ca.ubc.clicker.client.ClickerClient;
  */
 public class CommandController {
 	public static final String COMMAND_PING = "ping"; // to show we are connected
-	public static final String COMMAND_START_VOTING = "vote start";
-	public static final String COMMAND_STOP_VOTING = "vote stop";
+	public static final String COMMAND_START_VOTING = "start voting";
+	public static final String COMMAND_STOP_VOTING = "stop voting";
 	public static final String COMMAND_STATUS = "status";
-	public static final String COMMAND_CLICK = "click";
-	public static final char COMMAND_SEPARATOR = '|'; // separators command from args. e.g. click|id:button 
+	public static final String COMMAND_VOTE = "vote";
 	
 	private final ClickerServer server;
-	
+	private final JsonParser parser;
 	private final List<Command> commands;
 	
 	public CommandController(ClickerServer server) {
 		this.server = server;
+		this.parser = new JsonParser();
 		this.commands = new LinkedList<Command>();
 		registerCommands();
 	}
 	
-	// Oh, how I dream of anonymous functions. Java 7 has them!
-	// TODO: probably differentiate between commands that send reply to 1 client vs. broadcasting to all
+	private Gson gson() {
+		return server.gson();
+	}
+
+	private void outputCommandResponse(String command, Object data, ClickerClient client, boolean printLocal) {
+		CommandResponseMessage message = new CommandResponseMessage();
+		message.command = command;
+		message.data = data;
+		server.output(gson().toJson(message), client, printLocal);
+	}
+	
+	// Oh, how I dream of anonymous functions. Java 8 has them!
 	private void registerCommands() {
 		// does not broadcast
-		commands.add(new Command(COMMAND_PING) { void run(String args, ClickerClient client) throws Exception {
-			server.output("[ping]\n", client, false);
+		commands.add(new Command(COMMAND_PING) { void run(JsonElement args, ClickerClient client) throws Exception {
+			outputCommandResponse(COMMAND_PING, null, client, false);
 		} });
 		
 		// start voting
-		commands.add(new Command(COMMAND_START_VOTING) { void run(String args, ClickerClient client) throws Exception {
+		commands.add(new Command(COMMAND_START_VOTING) { void run(JsonElement args, ClickerClient client) throws Exception {
 			server.startAcceptingVotes();
-			server.output("[vote start]\n");
+			outputCommandResponse(COMMAND_START_VOTING, null, null, true);
 		} });
 		
 		// stop voting
-		commands.add(new Command(COMMAND_STOP_VOTING) { void run(String args, ClickerClient client) throws Exception {
+		commands.add(new Command(COMMAND_STOP_VOTING) { void run(JsonElement args, ClickerClient client) throws Exception {
 			server.stopAcceptingVotes();
-			server.output("[vote stop]\n");
+			outputCommandResponse(COMMAND_STOP_VOTING, null, null, true);
 		} });
 		
 		// get status - instructor id, accepting votes, number of clients
 		// does not broadcast
-		commands.add(new Command(COMMAND_STATUS) { void run(String args, ClickerClient client) throws Exception {
-			StringBuilder message = new StringBuilder();
-			
-			message.append("[status]\n");
-			
-			message.append("Time: ");
-			message.append(new Date().getTime());
-			message.append("\n");
-			
-			message.append("Instructor ID: ");
-			message.append(server.getInstructorId());
-			message.append("\n");
-			
-			message.append("Accepting Votes: ");
-			message.append(server.isAcceptingVotes());
-			message.append("\n");
-			
-			message.append("# Clients: ");
-			message.append(server.getNumClients());
-			message.append("\n");
-			
-			server.output(message.toString(), client);
+		commands.add(new Command(COMMAND_STATUS) { void run(JsonElement args, ClickerClient client) throws Exception {
+			outputCommandResponse(COMMAND_STATUS, server.getStatus(), client, true);
 		} });
 		
 		// click received (as opposed to via clicker base station)
-		commands.add(new Command(COMMAND_CLICK) { void run(String votesStr, ClickerClient client) throws Exception {
-			// TODO: this shouldn't crash with bad format
-			server.outputVotes(server.votesFromString(votesStr));
+		commands.add(new Command(COMMAND_VOTE) { void run(JsonElement votesJson, ClickerClient client) throws Exception {
+			server.outputVotes(server.votesFromJson(votesJson));
 		} });
 	}
 	
 	
 	public void runCommand(ClickerInput input) {
-		String message = input.message;
+		String message = input.message; // is a CommandMessage object (JSON)
 		ClickerClient client = input.client;
 		
-		// split into command and args
-		String name, args;
-		int separator = message.indexOf(COMMAND_SEPARATOR);
-		if (separator != -1) {
-			name = message.substring(0, separator);
-			args = message.substring(separator + 1);
-		} else {
-			name = message;
-			args = "";
-		}
-		
+		// deserialize as a generic json obj so we can interpret the arguments later.
+		JsonObject jsonObj = parser.parse(message).getAsJsonObject();
+		String name = jsonObj.get("command").getAsString();
+		JsonElement args = jsonObj.get("arguments");
+				
 		try {
 			for (Command command : commands) {
 				if (command.name.equals(name)) {
@@ -109,7 +97,7 @@ public class CommandController {
 
 			System.err.println("Warning! Unable to find command for "+message);
 		} catch (Exception e) {
-			server.output("[error:"+message+"]\n");
+			server.outputError(message);
 			System.out.println("Exception while running command "+message);
 			e.printStackTrace();
 		}
@@ -123,6 +111,6 @@ public class CommandController {
 			this.name = input;
 		}
 		
-		abstract void run(String args, ClickerClient client) throws Exception;
+		abstract void run(JsonElement args, ClickerClient client) throws Exception;
 	}
 }
