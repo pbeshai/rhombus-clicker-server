@@ -35,7 +35,7 @@ public class ClickerThread extends Thread {
 				if (server.isBaseStationConnected()) {
 					votes = server.getDriver().requestVotes();
 				
-					server.outputVotes(votes);
+					server.outputChoices(votes);
 				}
 				Thread.sleep(SLEEP_TIME);			
 			} catch (InterruptedException e) {

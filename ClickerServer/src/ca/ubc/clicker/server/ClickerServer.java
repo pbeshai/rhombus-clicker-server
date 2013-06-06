@@ -14,7 +14,7 @@ import ca.ubc.clicker.server.io.IOServer;
 import ca.ubc.clicker.server.messages.ErrorMessage;
 import ca.ubc.clicker.server.messages.ResponseMessage;
 import ca.ubc.clicker.server.messages.StatusMessage;
-import ca.ubc.clicker.server.messages.VoteMessage;
+import ca.ubc.clicker.server.messages.ChoiceMessage;
 import ca.ubc.clickers.BaseClickerApp;
 import ca.ubc.clickers.Vote;
 import ca.ubc.clickers.driver.exception.ClickerException;
@@ -105,7 +105,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		}
 	}
 	
-	// interpret input (e.g. "vote start" to start accepting votes), to be used by the input listener
+	// interpret input (e.g. "enable choices" to start accepting votes), to be used by the input listener
 	void runInput(ClickerInput input) {
 		commandController.runCommand(input);
 	}
@@ -136,14 +136,14 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		return io.getNumClients();
 	}
 	
-	private VoteMessage voteMessage(Vote vote) {
-		return voteMessage(vote.getId(), vote.getButton().name());
+	private ChoiceMessage choiceMessage(Vote vote) {
+		return choiceMessage(vote.getId(), vote.getButton().name());
 	}
 	
-	private VoteMessage voteMessage(String id, String button) {
-		VoteMessage message = new VoteMessage();
+	private ChoiceMessage choiceMessage(String id, String button) {
+		ChoiceMessage message = new ChoiceMessage();
 		message.id = id;
-		message.vote = button;
+		message.choice = button;
 		if (instructorId.equals(id)) {
 			message.instructor = true;
 		}
@@ -152,9 +152,9 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		return message;
 	}
 	
-	private Vote voteFromVoteMessage(VoteMessage message) {
+	private Vote voteFromChoiceMessage(ChoiceMessage message) {
 		// ignore the id generated from the constructor and use the one from the message
-		String voteButton = message.vote.toUpperCase();
+		String voteButton = message.choice.toUpperCase();
 		try { 
 			Vote vote = new Vote("111111", ButtonEnum.valueOf(voteButton));
 			vote.setId(message.id);
@@ -166,8 +166,8 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	}
 	
 	// json is serialized collection of VoteMessage objects
-	public List<Vote> votesFromJson(JsonElement votesJson) {
-		VoteMessage[] messages = gson().fromJson(votesJson, VoteMessage[].class);
+	public List<Vote> votesFromJson(JsonElement choicesJson) {
+		ChoiceMessage[] messages = gson().fromJson(choicesJson, ChoiceMessage[].class);
 		
 		if (messages == null) {
 			return null;
@@ -175,8 +175,8 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		
 		List<Vote> votes = new ArrayList<Vote>(messages.length);
 		
-		for (VoteMessage message : messages) {
-			Vote vote = voteFromVoteMessage(message);
+		for (ChoiceMessage message : messages) {
+			Vote vote = voteFromChoiceMessage(message);
 			if (vote != null) {
 				votes.add(vote);
 			}
@@ -185,33 +185,34 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		return votes;
 	}
 	
-	public void outputVotes(List<Vote> votes) {
+	// use List<Vote> since it's easy to get from the base station. 
+	public void outputChoices(List<Vote> votes) {
 		if (votes == null || votes.isEmpty()) {
 			return;
 		}
 		
 		// convert to voteMessage list
-		List<VoteMessage> messages = new ArrayList<VoteMessage>(votes.size());
+		List<ChoiceMessage> messages = new ArrayList<ChoiceMessage>(votes.size());
 		for (Vote vote : votes) {
-			messages.add(voteMessage(vote));
+			messages.add(choiceMessage(vote));
 		}
 		
 		ResponseMessage message = new ResponseMessage();
-		message.type = "votes";
+		message.type = "choices";
 		message.data = messages;
 		output(gson().toJson(message));
 	}
 	
-	public void outputError(String errorStr) {
+	public void outputError(String errorStr, String command) {
 		ErrorMessage message = new ErrorMessage();
 		message.error = errorStr;
+		message.command = command;
 		output(gson().toJson(message));
 	}
 	
-	
 	public StatusMessage getStatus() {
 		StatusMessage status = new StatusMessage();
-		status.acceptingVotes = isAcceptingVotes();
+		status.acceptingChoices = isAcceptingVotes();
 		status.numClients = getNumClients();
 		status.instructorId = getInstructorId();
 		status.time = new Date().getTime();

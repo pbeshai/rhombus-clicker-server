@@ -19,10 +19,10 @@ import com.google.gson.JsonParser;
  */
 public class CommandController {
 	public static final String COMMAND_PING = "ping"; // to show we are connected
-	public static final String COMMAND_START_VOTING = "start voting";
-	public static final String COMMAND_STOP_VOTING = "stop voting";
+	public static final String COMMAND_START_VOTING = "enable choices";
+	public static final String COMMAND_STOP_VOTING = "disable choices";
 	public static final String COMMAND_STATUS = "status";
-	public static final String COMMAND_VOTE = "vote";
+	public static final String COMMAND_CHOOSE = "choose";
 	
 	private final ClickerServer server;
 	private final JsonParser parser;
@@ -56,13 +56,13 @@ public class CommandController {
 		// start voting
 		commands.add(new Command(COMMAND_START_VOTING) { void run(JsonElement args, ClickerClient client) throws Exception {
 			server.startAcceptingVotes();
-			outputCommandResponse(COMMAND_START_VOTING, null, null, true);
+			outputCommandResponse(COMMAND_START_VOTING, true, null, true);
 		} });
 		
 		// stop voting
 		commands.add(new Command(COMMAND_STOP_VOTING) { void run(JsonElement args, ClickerClient client) throws Exception {
 			server.stopAcceptingVotes();
-			outputCommandResponse(COMMAND_STOP_VOTING, null, null, true);
+			outputCommandResponse(COMMAND_STOP_VOTING, true, null, true);
 		} });
 		
 		// get status - instructor id, accepting votes, number of clients
@@ -72,8 +72,8 @@ public class CommandController {
 		} });
 		
 		// click received (as opposed to via clicker base station)
-		commands.add(new Command(COMMAND_VOTE) { void run(JsonElement votesJson, ClickerClient client) throws Exception {
-			server.outputVotes(server.votesFromJson(votesJson));
+		commands.add(new Command(COMMAND_CHOOSE) { void run(JsonElement choicesJson, ClickerClient client) throws Exception {
+			server.outputChoices(server.votesFromJson(choicesJson));
 		} });
 	}
 	
@@ -105,7 +105,7 @@ public class CommandController {
 
 			System.err.println("Warning! Unable to find command for "+message);
 		} catch (Exception e) {
-			server.outputError(message);
+			server.outputError(message, name);
 			System.out.println("Exception while running command "+message);
 			e.printStackTrace();
 		}

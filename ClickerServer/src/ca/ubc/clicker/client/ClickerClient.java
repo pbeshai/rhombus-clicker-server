@@ -8,11 +8,11 @@ import ca.ubc.clicker.server.io.IOServer;
 
 /**
  * A object for handling client connections to the server. They receive output
- * from the clicker base station. They can send input to start or stop voting
+ * from the clicker base station. They can send input to enable or disable voting
  * via messages:
  * 
- *   vote start
- *   vote end
+ *   enable choices
+ *   disable choices
  *   
  * Two threads are used for handling this: one for output, one for input.
  * 

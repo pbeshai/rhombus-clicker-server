@@ -1,8 +1,8 @@
 package ca.ubc.clicker.server.messages;
 
-public class VoteMessage {
+public class ChoiceMessage {
 	public String id;
-	public String vote;
+	public String choice; // aka vote or button pressed
 	public Boolean instructor;
 	public Long time;
 }

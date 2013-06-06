@@ -6,13 +6,13 @@ import java.io.InputStreamReader;
 import java.util.Date;
 
 import ca.ubc.clicker.server.messages.CommandMessage;
-import ca.ubc.clicker.server.messages.VoteMessage;
+import ca.ubc.clicker.server.messages.ChoiceMessage;
 
 public class SystemInputThread extends Thread {
 	private ClickerServer server;
 	private BufferedReader in;
 
-	private final String VOTE_COMMAND = "vote";
+	private static final String VOTE_COMMAND = "choose";
 
 	public SystemInputThread(ClickerServer server) {
 		super("Input Thread");
@@ -31,16 +31,16 @@ public class SystemInputThread extends Thread {
 
 			String[] clicks = args.split(" ");
 			long time = new Date().getTime();
-			VoteMessage[] votes = new VoteMessage[clicks.length];
+			ChoiceMessage[] choices = new ChoiceMessage[clicks.length];
 			for (int i = 0; i < clicks.length; i++) {
 				String[] split = clicks[i].split(":");
-				votes[i] = new VoteMessage();
-				votes[i].id = split[0];
-				votes[i].vote = split[1];
-				votes[i].time = time;
-				votes[i].instructor = server.getInstructorId().equals(votes[i].id);
+				choices[i] = new ChoiceMessage();
+				choices[i].id = split[0];
+				choices[i].choice = split[1];
+				choices[i].time = time;
+				choices[i].instructor = server.getInstructorId().equals(choices[i].id);
 			}
-			message.arguments = votes;
+			message.arguments = choices;
 		}
 	}
 
