@@ -101,9 +101,16 @@ public class BaseIOServer implements IOServer {
 		output(message, null);
 	}
 	
+	// can be overridden by subclasses
+	protected String processOutput(String message) {
+		return message;
+	}
+	
 	// sends output to all the clients if client == null, otherwise just to client
 	public void output(String message, ClickerClient client) {
 		pruneClients();
+		
+		message = processOutput(message);
 		
 		if (client == null) { // broadcast
 			// send to all the clients

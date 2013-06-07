@@ -91,6 +91,4 @@ public class ClickerClient {
 	public void input(String message) {
 		server.input(message, this);
 	}
-	
-	
 }
