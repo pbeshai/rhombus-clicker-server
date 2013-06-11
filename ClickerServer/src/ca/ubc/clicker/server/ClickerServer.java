@@ -154,6 +154,10 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	
 	private Vote voteFromChoiceMessage(ChoiceMessage message) {
 		// ignore the id generated from the constructor and use the one from the message
+		if (message == null || message.choice == null) {
+			return null;
+		}
+		
 		String voteButton = message.choice.toUpperCase();
 		try { 
 			Vote vote = new Vote("111111", ButtonEnum.valueOf(voteButton));

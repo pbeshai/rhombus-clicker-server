@@ -32,8 +32,10 @@ public class SystemInputThread extends Thread {
 			String[] clicks = args.split(" ");
 			long time = new Date().getTime();
 			ChoiceMessage[] choices = new ChoiceMessage[clicks.length];
+
 			for (int i = 0; i < clicks.length; i++) {
 				String[] split = clicks[i].split(":");
+				if (split.length < 2) continue;
 				choices[i] = new ChoiceMessage();
 				choices[i].id = split[0];
 				choices[i].choice = split[1];
@@ -52,7 +54,7 @@ public class SystemInputThread extends Thread {
 			while ((inputLine = in.readLine()) != null) {
 				// convert into JSON
 				CommandMessage message = new CommandMessage();
-
+			
 				if (inputLine.indexOf(VOTE_COMMAND) == 0) {
 					voteCommand(inputLine, message);
 				} else {
