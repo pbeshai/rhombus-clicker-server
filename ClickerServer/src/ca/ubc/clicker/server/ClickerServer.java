@@ -190,15 +190,24 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	}
 	
 	// use List<Vote> since it's easy to get from the base station. 
+	// only outputs instructor votes if accepting votes is false
 	public void outputChoices(List<Vote> votes) {
 		if (votes == null || votes.isEmpty()) {
 			return;
 		}
 		
+		
 		// convert to voteMessage list
 		List<ChoiceMessage> messages = new ArrayList<ChoiceMessage>(votes.size());
 		for (Vote vote : votes) {
-			messages.add(choiceMessage(vote));
+			// only output instructor votes if accepting votes is false
+			if (isAcceptingVotes() || instructorId.equals(vote.getId())) {
+				messages.add(choiceMessage(vote));
+			}
+		}
+		
+		if (messages.isEmpty()) { // abort if no votes 
+			return;
 		}
 		
 		ResponseMessage message = new ResponseMessage();
