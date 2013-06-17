@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 
 /**
@@ -89,8 +90,11 @@ public class CommandController {
 			JsonObject jsonObj = parser.parse(message).getAsJsonObject();
 			name = jsonObj.get("command").getAsString();
 			args = jsonObj.get("arguments");
+		} catch (JsonSyntaxException e) {
+			System.err.println("JSON error running command "+message+": " + e.getMessage());
+			return;
 		} catch (IllegalStateException e) {
-			System.err.println("Error running command: " + e.getMessage());
+			System.err.println("Error running command "+message+": " + e.getMessage());
 			return;
 		}
 		
