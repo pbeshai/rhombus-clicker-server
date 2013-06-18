@@ -17,12 +17,12 @@ public class ClickTest {
 	private static final String SERVER_HOST = "localhost";
 	private static final int SERVER_PORT = 4444;
 	private static final Random random = new Random(1);
-	private static final int NUM_USERS = 100;
+	private static final int NUM_USERS = 75;
 	private static final String[] BUTTONS = { "A", "B", "C", "D", "E" };
 	
 	private static final String[] ids = { // these ids will be used first before switching to TEST# id.
-		"Peter",
-		"Beshai",
+//		"Peter",
+//		"Beshai",
 //		"18981F9F",
 //		"1FC5AE74"
 	};
@@ -36,8 +36,9 @@ public class ClickTest {
 		
 		// init users
 		List<ClickTestUser> users = new ArrayList<ClickTestUser>(NUM_USERS);
-		for (int i = 0; i < NUM_USERS; i++) {
-			String id = i < ids.length ? ids[i] : "TEST"+i;
+		for (int i = 1; i <= NUM_USERS; i++) {
+			String num = i < 10 ? "0"+i : String.valueOf(i);
+			String id = i < ids.length ? ids[i] : "P"+num;
 			ClickTestUser user = new ClickTestUser(id, out, random, BUTTONS);
 			users.add(user);
 		}
