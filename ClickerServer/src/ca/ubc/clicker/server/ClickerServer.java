@@ -1,10 +1,12 @@
 package ca.ubc.clicker.server;
 
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -38,6 +40,8 @@ import com.google.gson.JsonElement;
 public class ClickerServer extends BaseClickerApp implements IOServer {
 	public static final int DEFAULT_PORT = 4444;
 	public static final String INSTRUCTOR_OUTPUT_ID = "INSTRUCTOR";
+	
+	private static final String CONFIG_PROPERTIES_FILE = "config.properties";
 	
 	private final BlockingQueue<ClickerInput> inputQueue;
 	private int serverPort = DEFAULT_PORT;
@@ -244,8 +248,22 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	 */
 	public static void main(String[] args) throws Exception {
 		String instructorId = "371BA68A"; //"171BA6AA";
-		FrequencyEnum channel1 = null, channel2 = null;
-		Integer port = null;
+		FrequencyEnum channel1 = DEFAULT_CHANNEL_1, channel2 = DEFAULT_CHANNEL_2;
+		Integer port = DEFAULT_PORT;
+		
+		// read from config.properties file
+		Properties config = new Properties();
+		try {
+			config.load(new FileInputStream(CONFIG_PROPERTIES_FILE));
+			port = Integer.valueOf(config.getProperty("port", String.valueOf(DEFAULT_PORT)));
+			instructorId = config.getProperty("instructorId", instructorId);
+			channel1 = FrequencyEnum.valueOf(config.getProperty("channel1", DEFAULT_CHANNEL_1.name()));
+			channel2 = FrequencyEnum.valueOf(config.getProperty("channel2", DEFAULT_CHANNEL_2.name()));
+		} catch (IOException e) {
+			System.err.println("Could not find config.properties");
+		}
+		
+		// override from arguments
 		if (args.length > 0) {
 			instructorId = args[0];
 		}
@@ -257,10 +275,11 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 			port = Integer.parseInt(args[3]);
 		}
 	
+		System.out.println("Starting Clicker Server...");
 		System.out.println("Instructor ID: " + instructorId);
-		System.out.println("Channel1: " + (channel1 == null ? DEFAULT_CHANNEL_1 : channel1));
-		System.out.println("Channel2: " + (channel2 == null ? DEFAULT_CHANNEL_2 : channel2));
-		System.out.println("Port: " + (port == null ? DEFAULT_PORT : port));
+		System.out.println("Channel1: " + channel1);
+		System.out.println("Channel2: " + channel2);
+		System.out.println("Port: " + port);
 		
 		ClickerServer server = new ClickerServer(instructorId, channel1, channel2, port);
 		server.run();
