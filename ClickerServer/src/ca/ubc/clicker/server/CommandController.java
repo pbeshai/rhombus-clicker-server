@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.gson.GsonFactory;
 import ca.ubc.clicker.server.messages.CommandResponseMessage;
 
 import com.google.gson.Gson;
@@ -37,7 +38,7 @@ public class CommandController {
 	}
 	
 	private Gson gson() {
-		return server.gson();
+		return GsonFactory.gson();
 	}
 
 	private void outputCommandResponse(String command, Object data, ClickerClient client, boolean printLocal) {

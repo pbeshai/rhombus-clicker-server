@@ -5,17 +5,21 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.filters.Filter;
 
 public class BaseIOServer implements IOServer {
 	private int serverPort;
 	private List<ClickerClient> clients;
 	private IOServer composedServer = null; // workaround since we can't do mixins :(
-		
+	private List<Filter> filters;
+	
 	public BaseIOServer(int serverPort) {
 		this.serverPort = serverPort;
 		this.clients = new LinkedList<ClickerClient>();
+		this.filters = new LinkedList<Filter>();
 	}
 	
 	public BaseIOServer(int serverPort, IOServer composedServer) {
@@ -23,7 +27,9 @@ public class BaseIOServer implements IOServer {
 		this.composedServer = composedServer;
 	}
 	
-	public void init() throws IOException { } 
+	public void init() throws IOException {
+		loadFilters();
+	}
 
 	@Override
 	public void run() throws IOException, InterruptedException {
@@ -67,6 +73,12 @@ public class BaseIOServer implements IOServer {
 
 	public void input(String message) {
 		if (composedServer != null) {
+			message = filterInput(message);
+			
+			if (message == null) { // abort if message is empty
+				return;
+			}
+			
 			composedServer.input(message);
 		} else {
 			input(message, null);
@@ -75,6 +87,12 @@ public class BaseIOServer implements IOServer {
 
 	// should be overridden if not composed
 	public void input(String message, ClickerClient client) {
+		message = filterInput(message);
+		
+		if (message == null) { // abort if message is empty
+			return; 
+		}
+		
 		if (composedServer != null) {
 			composedServer.input(message, client);
 		} else {
@@ -112,6 +130,13 @@ public class BaseIOServer implements IOServer {
 		
 		message = processOutput(message);
 		
+		// filter output
+		message = filterOutput(message);
+		
+		if (message == null) { // abort if the message is empty
+			return;
+		}
+		
 		if (client == null) { // broadcast
 			// send to all the clients
 			for (int i = 0; i < clients.size(); i++) {
@@ -128,5 +153,37 @@ public class BaseIOServer implements IOServer {
 	@Override
 	public int getNumClients() {
 		return clients.size();
+	}
+	
+	protected String filterOutput(String message) {
+		for (Filter filter : filters) {
+			message = filter.output(message);
+			if (message == null) return null;
+		}
+		return message;
+	}
+	
+	protected String filterInput(String message) {
+		for (Filter filter : filters) {
+			message = filter.input(message);
+			if (message == null) return null;
+		}
+		return message;
+	}
+	
+	public void initializeFilter(Filter filter) {
+		if (composedServer != null) {
+			composedServer.initializeFilter(filter);
+		}
+	}
+	
+	protected void loadFilters() {
+		System.out.println("Loading filters...");
+		ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class);
+		for (Filter filter : filterLoader) {
+			System.out.println("  -> " + filter.getClass().getSimpleName());
+			initializeFilter(filter);
+			filters.add(filter);
+		}
 	}
 }

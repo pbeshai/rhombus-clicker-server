@@ -3,6 +3,7 @@ package ca.ubc.clicker.server.io;
 import java.io.IOException;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.filters.Filter;
 
 public interface IOServer {
 
@@ -20,5 +21,7 @@ public interface IOServer {
 
 	public abstract void run() throws IOException, InterruptedException;
 
+	abstract void initializeFilter(Filter filter);
+	
 	int getNumClients();
 }

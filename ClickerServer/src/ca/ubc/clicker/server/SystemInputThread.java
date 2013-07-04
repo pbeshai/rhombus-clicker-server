@@ -5,16 +5,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 
-import ca.ubc.clicker.server.messages.CommandMessage;
+import ca.ubc.clicker.server.gson.GsonFactory;
+import ca.ubc.clicker.server.io.IOServer;
 import ca.ubc.clicker.server.messages.ChoiceMessage;
+import ca.ubc.clicker.server.messages.CommandMessage;
+
+import com.google.gson.Gson;
 
 public class SystemInputThread extends Thread {
-	private ClickerServer server;
+	private IOServer server;
 	private BufferedReader in;
 
 	private static final String VOTE_COMMAND = "choose";
 
-	public SystemInputThread(ClickerServer server) {
+	public SystemInputThread(IOServer server) {
 		super("Input Thread");
 		this.server = server;
 		in = new BufferedReader(new InputStreamReader(System.in));
@@ -40,17 +44,17 @@ public class SystemInputThread extends Thread {
 				choices[i].id = split[0];
 				choices[i].choice = split[1];
 				choices[i].time = time;
-				choices[i].instructor = server.getInstructorId().equals(choices[i].id);
 			}
 			message.arguments = choices;
 		}
 	}
+	
 
 	@Override
 	public void run() {
 		try {
 			String inputLine;
-
+			Gson gson = GsonFactory.gson();
 			while ((inputLine = in.readLine()) != null) {
 				// convert into JSON
 				CommandMessage message = new CommandMessage();
@@ -61,7 +65,7 @@ public class SystemInputThread extends Thread {
 					message.command = inputLine;
 				}
 
-				server.input(server.gson().toJson(message));
+				server.input(gson.toJson(message));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

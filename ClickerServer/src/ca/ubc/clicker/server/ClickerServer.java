@@ -11,12 +11,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.server.filters.Filter;
+import ca.ubc.clicker.server.gson.GsonFactory;
 import ca.ubc.clicker.server.io.BaseIOServer;
 import ca.ubc.clicker.server.io.IOServer;
+import ca.ubc.clicker.server.messages.ChoiceMessage;
 import ca.ubc.clicker.server.messages.ErrorMessage;
 import ca.ubc.clicker.server.messages.ResponseMessage;
 import ca.ubc.clicker.server.messages.StatusMessage;
-import ca.ubc.clicker.server.messages.ChoiceMessage;
 import ca.ubc.clickers.BaseClickerApp;
 import ca.ubc.clickers.Vote;
 import ca.ubc.clickers.driver.exception.ClickerException;
@@ -24,7 +26,6 @@ import ca.ubc.clickers.enums.ButtonEnum;
 import ca.ubc.clickers.enums.FrequencyEnum;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 /**
@@ -46,7 +47,6 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	private final BlockingQueue<ClickerInput> inputQueue;
 	private int serverPort = DEFAULT_PORT;
 	private CommandController commandController;
-	private GsonBuilder gsonBuilder;
 	private IOServer io;
 	
 	public ClickerServer() throws InterruptedException, IOException, ClickerException {
@@ -69,7 +69,6 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		LCDRow1 = "Clicker Server";
 		inputQueue = new LinkedBlockingQueue<ClickerInput>();
 		commandController = new CommandController(this);
-		gsonBuilder = new GsonBuilder();
 		io = new BaseIOServer(serverPort, this);
 	}
 	
@@ -80,7 +79,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		
 		// start thread for reading stdin input
 		@SuppressWarnings("unused")
-		SystemInputThread systemInputThread = new SystemInputThread(this);
+		SystemInputThread systemInputThread = new SystemInputThread(io);
 		
 		
 		// start thread for reading votes from the base station
@@ -238,8 +237,12 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	}
 	
 
-	public Gson gson() {
-		return this.gsonBuilder.create();
+	private Gson gson() {
+		return GsonFactory.gson();
+	}
+	
+	public void initializeFilter(Filter filter) {
+		filter.initialize(this);
 	}
 	
 	/**

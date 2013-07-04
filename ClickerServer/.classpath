@@ -13,5 +13,6 @@
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/ClickerSupport"/>
 	<classpathentry kind="lib" path="lib/gson-2.2.4.jar"/>
+	<classpathentry kind="lib" path="/MultipleInstructorFilter/MultipleInstructorFilter.jar" sourcepath="/MultipleInstructorFilter"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
