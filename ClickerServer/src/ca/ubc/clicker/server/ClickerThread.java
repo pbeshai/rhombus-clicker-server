@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ca.ubc.clickers.Vote;
-import ca.ubc.clickers.driver.exception.ClickerException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import ca.ubc.clicker.Vote;
+import ca.ubc.clicker.driver.exception.ClickerException;
 
 /**
  * Continuously reads votes from the base station
@@ -13,6 +16,7 @@ import ca.ubc.clickers.driver.exception.ClickerException;
  *
  */
 public class ClickerThread extends Thread {
+	private static Logger log = LogManager.getLogger();
 	private final static int SLEEP_TIME = 150;
 	
 	ClickerServer server;
@@ -20,7 +24,7 @@ public class ClickerThread extends Thread {
 	
 	
 	ClickerThread(ClickerServer server) {
-		super("Clicker Thread");
+		super("ClickerThread");
 		this.server = server;
 		this.instructorId = server.getInstructorId();
 		start();
@@ -39,17 +43,17 @@ public class ClickerThread extends Thread {
 				}
 				Thread.sleep(SLEEP_TIME);			
 			} catch (InterruptedException e) {
-				System.err.println("clicker thread interrupted: "+e.getMessage());
+				log.error("Interrupted: "+e.getMessage());
 				e.printStackTrace();
 				break;
 			} catch (IOException e) {
-				System.err.println("clicker thread IOException: "+e.getMessage());
+				log.error("IOException: "+e.getMessage());
 				e.printStackTrace();
 			} catch (ClickerException e) {
-				System.err.println("clicker thread ClickerException: "+e.getMessage());
+				log.error("ClickerException: "+e.getMessage());
 				e.printStackTrace();
 			}
 		}
-		System.err.println("exiting clicker thread");
+		log.error("Exiting...");
 	}
 }

@@ -19,7 +19,7 @@ public class SystemInputThread extends Thread {
 	private static final String VOTE_COMMAND = "choose";
 
 	public SystemInputThread(IOServer server) {
-		super("Input Thread");
+		super("SystemInputThread");
 		this.server = server;
 		in = new BufferedReader(new InputStreamReader(System.in));
 		start();

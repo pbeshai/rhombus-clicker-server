@@ -16,7 +16,7 @@ public class ClickerServerInputThread extends Thread {
 	private IOServer server;
 	
 	public ClickerServerInputThread(InputStream inputStream, IOServer server) {
-		super("Clicker Server Input Thread");
+		super("ClickerServerInputThread");
 		in = new BufferedReader(new InputStreamReader(inputStream));
 		this.server = server;
 		start();

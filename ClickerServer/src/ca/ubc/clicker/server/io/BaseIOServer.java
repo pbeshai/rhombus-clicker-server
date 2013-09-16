@@ -7,10 +7,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import ca.ubc.clicker.client.ClickerClient;
 import ca.ubc.clicker.server.filters.Filter;
 
 public class BaseIOServer implements IOServer {
+	private static Logger log = LogManager.getLogger();
+	
 	private int serverPort;
 	private List<ClickerClient> clients;
 	private IOServer composedServer = null; // workaround since we can't do mixins :(
@@ -42,7 +47,7 @@ public class BaseIOServer implements IOServer {
 		if (serverPort >= 0) {
 			try {
 				serverSocket = new ServerSocket(serverPort);
-				System.out.println("Successfully listening on port " + serverPort);
+				log.info("Successfully listening on port " + serverPort);
 
 				// accept client connections
 				try {
@@ -53,18 +58,18 @@ public class BaseIOServer implements IOServer {
 						clients.add(client);
 					}
 				} catch (IOException e) {
-					System.err.println("Server socket accept failed on port: " + serverPort);
+					log.warn("Server socket accept failed on port: " + serverPort);
 					System.exit(-1);
 				}
 
 				serverSocket.close();
 
 			} catch (IOException e) {
-				System.err.println("ERROR: Could not listen on port: " + serverPort);
+				log.warn("Could not listen on port: " + serverPort);
 			}
 		}
 
-		System.out.println("Failed to open socket on port " + serverPort + "; running locally");
+		log.warn("Failed to open socket on port " + serverPort + "; running locally");
 
 		while (true) {
 			Thread.sleep(300);
@@ -96,7 +101,7 @@ public class BaseIOServer implements IOServer {
 		if (composedServer != null) {
 			composedServer.input(message, client);
 		} else {
-			System.out.println("INPUT: "+message+", client: "+client);
+			log.info("INPUT: "+message+", client: "+client);
 		}
 	}
 	
@@ -178,10 +183,10 @@ public class BaseIOServer implements IOServer {
 	}
 	
 	protected void loadFilters() {
-		System.out.println("Loading filters...");
+		log.info("Loading filters...");
 		ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class);
 		for (Filter filter : filterLoader) {
-			System.out.println("  -> " + filter.getClass().getSimpleName());
+			log.info("  -> " + filter.getClass().getSimpleName());
 			initializeFilter(filter);
 			filters.add(filter);
 		}

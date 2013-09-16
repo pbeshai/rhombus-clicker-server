@@ -10,7 +10,7 @@ public class ClientOutputThread extends Thread {
 	private final BlockingQueue<String> queue;
 	
 	public ClientOutputThread(int id, OutputStream outStream) {
-		super("Client " + id + " Output Thread");
+		super("ClientOutputThread" + id);
 		out = new PrintWriter(outStream, true);
 		queue = new LinkedBlockingQueue<String>();
 		start();

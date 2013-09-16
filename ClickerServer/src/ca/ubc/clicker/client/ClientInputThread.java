@@ -17,7 +17,7 @@ public class ClientInputThread extends Thread {
 	private ClickerClient client;
 	
 	public ClientInputThread(int id, InputStream inputStream, ClickerClient client) {
-		super("Client Input Thread " + id);
+		super("ClientInputThread" + id);
 		this.client = client;
 		in = new BufferedReader(new InputStreamReader(inputStream));
 

@@ -10,7 +10,15 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import ca.ubc.clicker.BaseClickerApp;
+import ca.ubc.clicker.Vote;
 import ca.ubc.clicker.client.ClickerClient;
+import ca.ubc.clicker.driver.exception.ClickerException;
+import ca.ubc.clicker.enums.ButtonEnum;
+import ca.ubc.clicker.enums.FrequencyEnum;
 import ca.ubc.clicker.server.filters.Filter;
 import ca.ubc.clicker.server.gson.GsonFactory;
 import ca.ubc.clicker.server.io.BaseIOServer;
@@ -19,11 +27,6 @@ import ca.ubc.clicker.server.messages.ChoiceMessage;
 import ca.ubc.clicker.server.messages.ErrorMessage;
 import ca.ubc.clicker.server.messages.ResponseMessage;
 import ca.ubc.clicker.server.messages.StatusMessage;
-import ca.ubc.clickers.BaseClickerApp;
-import ca.ubc.clickers.Vote;
-import ca.ubc.clickers.driver.exception.ClickerException;
-import ca.ubc.clickers.enums.ButtonEnum;
-import ca.ubc.clickers.enums.FrequencyEnum;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -39,8 +42,10 @@ import com.google.gson.JsonElement;
  *
  */
 public class ClickerServer extends BaseClickerApp implements IOServer {
+	private static Logger log = LogManager.getLogger();
+	private static Logger clicksLog = LogManager.getLogger("clicks");
+	
 	public static final int DEFAULT_PORT = 4444;
-	public static final String INSTRUCTOR_OUTPUT_ID = "INSTRUCTOR";
 	
 	private static final String CONFIG_PROPERTIES_FILE = "config.properties";
 	
@@ -63,10 +68,10 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	
 	public ClickerServer(String instructorId, FrequencyEnum channel1, FrequencyEnum channel2, Integer port)
 			throws InterruptedException, IOException, ClickerException {
-		super(instructorId, channel1, channel2);
+		super(instructorId, channel1, channel2, "Clicker Server", String.format("I:%s Ch:%s%s", instructorId, channel1.name(), channel2.name()));
 		
 		if (port != null) this.serverPort = port;
-		LCDRow1 = "Clicker Server";
+		
 		inputQueue = new LinkedBlockingQueue<ClickerInput>();
 		commandController = new CommandController(this);
 		io = new BaseIOServer(serverPort, this);
@@ -104,7 +109,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		try {
 			inputQueue.add(new ClickerInput(message, client));
 		} catch (IllegalStateException e) {
-			System.err.println("Warning: no space left in server input queue");
+			log.error("Warning: no space left in server input queue");
 		}
 	}
 	
@@ -129,7 +134,11 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 	// sends output to all the clients if client == null, otherwise just to client
 	public void output(String message, ClickerClient client, boolean printLocal) {
 		if (printLocal) {
-			System.out.println(message); // output locally for debugging
+			if (client != null) {
+				log.info("[output for {}] {}", client.toString(), message);
+			} else {
+				log.info("[output] {}", message);
+			}
 		}
 		
 		io.output(message, client);
@@ -167,7 +176,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 			vote.setId(message.id);
 			return vote;
 		} catch (IllegalArgumentException e) {
-			System.err.println("Discarding illegal vote "+voteButton+" by "+message.id);
+			log.error("Discarding illegal vote "+voteButton+" by "+message.id);
 		}
 		return null;
 	}
@@ -205,6 +214,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		for (Vote vote : votes) {
 			// only output instructor votes if accepting votes is false
 			if (isAcceptingVotes() || instructorId.equals(vote.getId())) {
+				clicksLog.info("{}:{}", vote.getId(), vote.getButton());
 				messages.add(choiceMessage(vote));
 			}
 		}
@@ -263,7 +273,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 			channel1 = FrequencyEnum.valueOf(config.getProperty("channel1", DEFAULT_CHANNEL_1.name()));
 			channel2 = FrequencyEnum.valueOf(config.getProperty("channel2", DEFAULT_CHANNEL_2.name()));
 		} catch (IOException e) {
-			System.err.println("Could not find config.properties");
+			log.error("Could not find config.properties");
 		}
 		
 		// override from arguments
@@ -278,11 +288,11 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 			port = Integer.parseInt(args[3]);
 		}
 	
-		System.out.println("Starting Clicker Server...");
-		System.out.println("Instructor ID: " + instructorId);
-		System.out.println("Channel1: " + channel1);
-		System.out.println("Channel2: " + channel2);
-		System.out.println("Port: " + port);
+		log.info("Starting Clicker Server...");
+		log.info("Instructor ID: " + instructorId);
+		log.info("Channel1: " + channel1);
+		log.info("Channel2: " + channel2);
+		log.info("Port: " + port);
 		
 		ClickerServer server = new ClickerServer(instructorId, channel1, channel2, port);
 		server.run();

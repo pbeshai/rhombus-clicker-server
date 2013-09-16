@@ -3,6 +3,9 @@ package ca.ubc.clicker.server;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import ca.ubc.clicker.client.ClickerClient;
 import ca.ubc.clicker.server.gson.GsonFactory;
 import ca.ubc.clicker.server.messages.CommandResponseMessage;
@@ -20,6 +23,7 @@ import com.google.gson.JsonSyntaxException;
  *
  */
 public class CommandController {
+	private static Logger log = LogManager.getLogger();
 	public static final String COMMAND_PING = "ping"; // to show we are connected
 	public static final String COMMAND_START_VOTING = "enable choices";
 	public static final String COMMAND_STOP_VOTING = "disable choices";
@@ -92,10 +96,10 @@ public class CommandController {
 			name = jsonObj.get("command").getAsString();
 			args = jsonObj.get("arguments");
 		} catch (JsonSyntaxException e) {
-			System.err.println("JSON error running command "+message+": " + e.getMessage());
+			log.error("JSON error running command "+message+": " + e.getMessage());
 			return;
 		} catch (IllegalStateException e) {
-			System.err.println("Error running command "+message+": " + e.getMessage());
+			log.error("Error running command "+message+": " + e.getMessage());
 			return;
 		}
 		
@@ -103,12 +107,22 @@ public class CommandController {
 		try {
 			for (Command command : commands) {
 				if (command.name.equals(name)) {
+					if (!name.equals(COMMAND_PING) && !name.equals(COMMAND_CHOOSE)) {
+						String logStr = "[command] " + name;
+						if (client != null) {
+							name += " from " + client.toString();
+						}
+						if (args != null) {
+							logStr += " " + args.toString();
+						}
+						log.info(logStr);
+					}
 					command.run(args, client);
 					return;
 				}
 			}
 
-			System.err.println("Warning! Unable to find command for "+message);
+			log.warn("Unable to find command for "+message);
 		} catch (Exception e) {
 			server.outputError(message, name);
 			System.out.println("Exception while running command "+message);

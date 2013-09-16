@@ -13,7 +13,7 @@ public class ServerInputThread extends Thread {
 	private final BlockingQueue<ClickerInput> queue;
 	
 	public ServerInputThread(ClickerServer server, BlockingQueue<ClickerInput> queue) {
-		super("Server Input Listener Thread");
+		super("ServerInputListenerThread");
 		
 		this.server = server;
 		this.queue = queue;

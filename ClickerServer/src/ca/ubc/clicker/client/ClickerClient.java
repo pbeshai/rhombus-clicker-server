@@ -3,6 +3,9 @@ package ca.ubc.clicker.client;
 import java.io.IOException;
 import java.net.Socket;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import ca.ubc.clicker.server.io.IOServer;
 
 
@@ -20,6 +23,8 @@ import ca.ubc.clicker.server.io.IOServer;
  *
  */
 public class ClickerClient {
+	private static Logger log = LogManager.getLogger();
+	
 	private static int clientId = 1;
 	
 	boolean alive = true;
@@ -33,7 +38,7 @@ public class ClickerClient {
 	
 	public ClickerClient(Socket clientSocket, IOServer server) {
 		this.id = clientId++;
-		System.out.println("Client "+id+" connected.");
+		log.info("Client "+id+" connected.");
 		
 		this.clientSocket = clientSocket;
 		this.server = server;
@@ -42,14 +47,14 @@ public class ClickerClient {
 		try {
 			this.output = new ClientOutputThread(id, clientSocket.getOutputStream());
 		} catch (IOException e) {
-			System.err.println("Error getting output stream for client "+id);
+			log.error("Error getting output stream for client "+id);
 		}
 		
 		// create input thread
 		try {
 			this.input = new ClientInputThread(id, clientSocket.getInputStream(), this);
 		} catch (IOException e) {
-			System.err.println("Error getting input stream for client "+id);
+			log.error("Error getting input stream for client "+id);
 		}
 	}
 	
@@ -65,13 +70,17 @@ public class ClickerClient {
 		if (!alive) { // just ended if either thread is done
 			try {
 				clientSocket.close();
-				System.out.println("Client "+ id + " finished.");
+				log.info("Client "+ id + " disconnected.");
 			} catch (IOException e) {
-				System.err.println("Error closing socket for client " + id);
+				log.error("Error closing socket for client " + id);
 			}
 		}
 		
 		return alive;
+	}
+	
+	public String toString() {
+		return "client " + id;
 	}
 	
 	// sends output from server to client
@@ -83,7 +92,7 @@ public class ClickerClient {
 		try {
 			output.getMessageQueue().add(message);
 		} catch (IllegalStateException e) {
-			System.err.println("Warning: no space left in queue for " + output);
+			log.error("Warning: no space left in queue for " + output);
 		}
 	}
 	

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+      <!--  %style{%d [%t]}{black} %highlight{%-5level: %msg%n%throwable} -->
+<configuration status="warn" name="ClickerServer" packages="">
+  <appenders>
+  	<Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout>
+        <pattern>
+      	  %d{HH:mm:ss.SSS} [%t] [%level] %logger{1} - %msg%n
+        </pattern>
+      </PatternLayout>
+    </Console>
+    <RollingFile name="ClicksRollingFile" fileName="log/clicks.log"
+                 filePattern="logs/$${date:yyyy-MM}/clicks-%d{MM-dd-yyyy}-%i.log.gz">
+      <PatternLayout>
+        <pattern>%d [%t] %m%n</pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="250 MB"/>
+      </Policies>
+    </RollingFile>
+    <RollingFile name="ServerRollingFile" fileName="log/server.log"
+                 filePattern="logs/$${date:yyyy-MM}/server-%d{MM-dd-yyyy}-%i.log.gz">
+      <PatternLayout>
+        <pattern>%d [%t] %-5level %logger{1} - %m%n</pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="250 MB"/>
+      </Policies>
+    </RollingFile>
+  </appenders>
+  <loggers>
+    <root level="error">
+    </root>
+    <logger name="ca.ubc.clicker" level="trace">
+    	<appender-ref ref="Console"/>
+    </logger>
+    <logger name="ca.ubc.clicker.server" level="trace">
+   	  <appender-ref ref="ServerRollingFile"/>
+    </logger>
+    <logger name="clicks" level="trace" additivity="false">
+      <appender-ref ref="Console"/>
+      <appender-ref ref="ClicksRollingFile"/>
+    </logger>
+  </loggers>
+</configuration>
