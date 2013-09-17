@@ -226,7 +226,7 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		ResponseMessage message = new ResponseMessage();
 		message.type = "choices";
 		message.data = messages;
-		output(gson().toJson(message));
+		output(gson().toJson(message), null, false);
 	}
 	
 	public void outputError(String errorStr, String command) {
