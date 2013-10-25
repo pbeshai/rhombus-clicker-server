@@ -8,7 +8,7 @@ import ca.ubc.clicker.server.ClickerServer;
  *
  */
 public interface Filter {
-	public void initialize(ClickerServer server);
+	public boolean initialize(ClickerServer server);
 	
 	public String output(String message);
 	

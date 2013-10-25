@@ -17,7 +17,7 @@ public class ClickTest {
 	private static final String SERVER_HOST = "localhost";
 	private static final int SERVER_PORT = 4444;
 	private static final Random random = new Random(1);
-	private static final int NUM_USERS = 75;
+	private static final int NUM_USERS = 45;
 	private static final String[] BUTTONS = { "A", "B", "C", "D", "E" };
 	
 	private static final String[] ids = { // these ids will be used first before switching to TEST# id.

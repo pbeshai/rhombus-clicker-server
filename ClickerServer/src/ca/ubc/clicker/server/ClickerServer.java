@@ -251,8 +251,8 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 		return GsonFactory.gson();
 	}
 	
-	public void initializeFilter(Filter filter) {
-		filter.initialize(this);
+	public boolean initializeFilter(Filter filter) {
+		return filter.initialize(this);
 	}
 	
 	/**
@@ -270,6 +270,9 @@ public class ClickerServer extends BaseClickerApp implements IOServer {
 			config.load(new FileInputStream(CONFIG_PROPERTIES_FILE));
 			port = Integer.valueOf(config.getProperty("port", String.valueOf(DEFAULT_PORT)));
 			instructorId = config.getProperty("instructorId", instructorId);
+			if (instructorId.indexOf(',') != -1) { // if a comma separated, take the first
+				instructorId = instructorId.substring(0, instructorId.indexOf(','));
+			}
 			channel1 = FrequencyEnum.valueOf(config.getProperty("channel1", DEFAULT_CHANNEL_1.name()));
 			channel2 = FrequencyEnum.valueOf(config.getProperty("channel2", DEFAULT_CHANNEL_2.name()));
 		} catch (IOException e) {

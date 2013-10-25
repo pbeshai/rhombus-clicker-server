@@ -176,19 +176,26 @@ public class BaseIOServer implements IOServer {
 		return message;
 	}
 	
-	public void initializeFilter(Filter filter) {
+	public boolean initializeFilter(Filter filter) {
 		if (composedServer != null) {
-			composedServer.initializeFilter(filter);
+			return composedServer.initializeFilter(filter);
 		}
+		
+		return false;
 	}
 	
 	protected void loadFilters() {
 		log.info("Loading filters...");
 		ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class);
 		for (Filter filter : filterLoader) {
-			log.info("  -> " + filter.getClass().getSimpleName());
-			initializeFilter(filter);
-			filters.add(filter);
+			
+			boolean enabled = initializeFilter(filter);
+			if (enabled) {
+				log.info("  OK " + filter.getClass().getSimpleName());
+				filters.add(filter);
+			} else {
+				log.info("  X  " + filter.getClass().getSimpleName());
+			}
 		}
 	}
 }

@@ -21,7 +21,7 @@ public interface IOServer {
 
 	public abstract void run() throws IOException, InterruptedException;
 
-	abstract void initializeFilter(Filter filter);
+	abstract boolean initializeFilter(Filter filter);
 	
 	int getNumClients();
 }
