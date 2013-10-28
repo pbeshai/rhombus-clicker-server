@@ -10,7 +10,7 @@
       </PatternLayout>
     </Console>
     <RollingFile name="ClicksRollingFile" fileName="log/clicks.log"
-                 filePattern="logs/$${date:yyyy-MM}/clicks-%d{MM-dd-yyyy}-%i.log.gz">
+                 filePattern="log/$${date:yyyy-MM}/clicks-%d{MM-dd-yyyy}-%i.log.gz">
       <PatternLayout>
         <pattern>%d [%t] %m%n</pattern>
       </PatternLayout>
@@ -20,7 +20,7 @@
       </Policies>
     </RollingFile>
     <RollingFile name="ServerRollingFile" fileName="log/server.log"
-                 filePattern="logs/$${date:yyyy-MM}/server-%d{MM-dd-yyyy}-%i.log.gz">
+                 filePattern="log/$${date:yyyy-MM}/server-%d{MM-dd-yyyy}-%i.log.gz">
       <PatternLayout>
         <pattern>%d [%t] %-5level %logger{1} - %m%n</pattern>
       </PatternLayout>
